@@ -12,7 +12,7 @@ if(!dir.exists(path))dir.create(path, recursive = T)
 DefaultAssay(object) <- "SCT"
 Idents()
 # global
-features <- c("CD19","CCND1","SOX11",
+features <- c("CD19","CCND1","PCNA",
               "CD3D","CD4","CD8A",
               "MS4A7","CD14","FCGR1A",
               "GNLY","KLRC1","NCAM1")

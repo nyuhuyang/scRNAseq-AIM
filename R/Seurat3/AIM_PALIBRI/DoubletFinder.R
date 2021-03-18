@@ -23,7 +23,11 @@ if(!dir.exists(path))dir.create(path, recursive = T)
 
 # samples
 
-(load(file = "data/MCL_AIM_58_20201009.Rda"))
+(load(file = "data/MCL_AIM_74_20210311_SCT.Rda"))
+meta.data = object@meta.data
+(load(file = "data/MCL_AIM_74_20210311.Rda"))
+object@meta.data = meta.data
+
 (samples = unique(object$orig.ident))
 object_list <- SplitObject(object,split.by = "orig.ident")
 rm(object);GC()
@@ -34,8 +38,8 @@ for (i in 1:length(object_list)) {
     sweep.res_list[[i]] <- paramSweep_v4(object_list[[i]], PCs = 1:npcs, sct = T)
     Progress(i,length(object_list))
 }
-save(sweep.res_list,file = "output/MCL_AIM_58_20201009_sweep.res_list.Rda")
-(load(file = "output/MCL_AIM_58_20201009_sweep.res_list.Rda"))
+save(sweep.res_list,file = "output/MCL_AIM_74_2021031_sweep.res_list.Rda")
+(load(file = "output/MCL_AIM_74_2021031_sweep.res_list.Rda"))
 sweep_list <- lapply(sweep.res_list, function(x) summarizeSweep(x, GT = FALSE))
 bcmvn_list <- lapply(sweep_list,find.pK)
 

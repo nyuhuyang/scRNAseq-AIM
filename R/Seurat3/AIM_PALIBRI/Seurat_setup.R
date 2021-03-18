@@ -25,14 +25,27 @@ if(!dir.exists("doc")) dir.create("doc")
 df_samples <- readxl::read_excel("doc/20210311_scRNAseq_info.xlsx")
 colnames(df_samples) <- colnames(df_samples) %>% tolower
 (attach(df_samples))
-sample = df_samples$`sample name`
+samples = df_samples$`sample name`
 
-#======1.2 load  SingleCellExperiment =========================
+#======1.2 load  Seurat =========================
 (load(file = "data/MCL_AIM_74_20210311.Rda"))
-df_samples <- readxl::read_excel("doc/20210311_scRNAseq_info.xlsx")
-df_samples = as.data.frame(df_samples)
-colnames(df_samples) <- colnames(df_samples) %>% tolower
-object@meta.data$orig.ident %<>% factor(levels = df_samples$`sample name`)
+meta.data = object@meta.data
+for(i in 1:length(samples)){
+    cells <- meta.data$orig.ident %in% samples[i]
+    meta.data[cells,"patient"]    = df_samples$patient[i]
+    meta.data[cells,"project"]    = df_samples$project[i]
+    meta.data[cells,"phase"]     = df_samples$phase[i]
+    meta.data[cells,"tissue"]     = df_samples$tissue[i]
+    meta.data[cells,"conditions"] = df_samples$conditions[i]
+    meta.data[cells,"disease"]    = df_samples$disease[i]
+}
+meta.data$orig.ident %<>% factor(levels = samples)
+
+
+table(rownames(object@meta.data) == rownames(meta.data))
+table(colnames(object) == rownames(meta.data))
+
+object@meta.data = meta.data
 
 #======1.6 Performing SCTransform and integration =========================
 set.seed(100)
