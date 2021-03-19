@@ -46,63 +46,72 @@ lapply(c("orig.ident","patient","cell.types"), function(group.by)
                no.legend = F,label.size = 4, repel = T, 
                title = paste("Harmony Integration by",group.by),
                do.print = T, do.return = F))
-# re-run cluster
-DefaultAssay(object)  = "SCT"
-object <- FindVariableFeatures(object = object, selection.method = "vst",
-                               num.bin = 20, nfeatures = 2000,
-                               mean.cutoff = c(0.1, 8), dispersion.cutoff = c(1, Inf))
-object %<>% ScaleData
+UMAPPlot.1(object, group.by="SCT_snn_res.0.8",
+           pt.size = 0.3,label = T,
+           label.repel = T,alpha = 0.9,
+           do.return = F,
+           no.legend = T,label.size = 4, repel = T, 
+           title = "resolution = 0.8 original",
+           do.print = T, save.path = paste0(path,"test_res"))
+Idents(object) = "SCT_snn_res.0.8"
+snn_res_df <- table(Idents(object)) %>% as.data.frame()
+snn_res_df %<>% filter(Freq > 1)
 
-npcs = 85
-object %<>% FindNeighbors(reduction = "harmony",dims = 1:npcs)
-resolutions = seq(0.4,1.2, by = 0.1)
-for(i in 1:length(resolutions)){
-    object %<>% FindClusters(resolution = resolutions[i],method = "igraph",
-                             algorithm = 4)
-    UMAPPlot.1(object, group.by=paste0("SCT_snn_res.",resolutions[i]),
+snn_res = sort(as.integer(as.character(snn_res_df$Var1)))
+
+for (i in seq_along(snn_res)) {
+    sub_object <- subset(object, idents = snn_res[i])
+    g <- UMAPPlot.1(sub_object, group.by="SCT_snn_res.0.8",
                pt.size = 0.3,label = T,
                label.repel = T,alpha = 0.9,
-               do.return = F,
+               do.return = T,
                no.legend = T,label.size = 4, repel = T, 
-               title = paste("res =",resolutions[i]),
-               do.print = T, save.path = paste0(path,"test_res"))
-    Progress(i,length(resolutions))
+               title = paste("resolution =",snn_res[i]),
+               do.print = F)
+    jpeg(paste0(path,"test_res/sub_B_ident=",snn_res[i],".jpeg"), units="in", width=10, height=10,res=600)
+    print(g+xlim(-13,7)+ ylim(-10,2.5))
+    dev.off()
+    Progress(i,length(snn_res))
 }
 
-Idents(object) = "SCT_snn_res.1"
-object %<>% RenameIdents("0" = "C1",
-                         "1" = "C1",
-                         "2" = "C2",
-                         "3" = "C2",
-                         "4" = "C4",
-                         "5" = "C3",
-                         "6" = "C2",
-                         "7" = "C4",
-                         "8" = "C4",
-                         "9" = "C2",
-                         "10"= "C2",
-                         "11"= "C3",
-                         "12"= "C1",
-                         "13"= "C1",
-                         "14"= "C1",
-                         "15"= "C1",
-                         "16"= "C1",
-                         "17"= "C2",
-                         "18"= "C1",
-                         "19"= "C1",
-                         "20"= "C1",
-                         "21"= "C1",
-                         "22"= "C1")
-object[["X4clusters"]] = as.character(Idents(object))
-object[["X5clusters"]] = object[["X4clusters"]]
-object$X5clusters[(object$SCT_snn_res.1.2 == 7)] = "C5"
-Idents(object) = "X4clusters"
-lapply(c("SCT_snn_res.1","X4clusters", "X5clusters"), function(group.by)
-    TSNEPlot.1(object, group.by=group.by,pt.size = 0.3,label = T,
+
+object %<>% RenameIdents("0"  = "C5",
+                          "1" = "C2",
+                          "2" = "C2",
+                          "3" = "C1",
+                          "4" = "C3",
+                          "5" = "C4",
+                          "7" = "C4",
+                          "8" = "C5",
+                          "9" = "C6",
+                          "10" = "C3",
+                          "11" = "C5",
+                          "12" = "C4",
+                          "13" = "C5",
+                          "14" = "C6",
+                          "18" = "C4",
+                          "20" = "C1",
+                          "21" = "C1",
+                          "22" = "C6",
+                          "23" = "C1",
+                          "24" = "C5",
+                          "25" = "C5",
+                          "26" = "C2",
+                          "27" = "C1",
+                          "28" = "C1",
+                          "29" = "C5",
+                          "30" = "C1",
+                          "31" = "C5",
+                          "37" = "C1",
+                          "38" = "C1")
+object[["X6clusters"]] = as.character(Idents(object))
+Idents(object) = "X6clusters"
+lapply(c(TSNEPlot.1,UMAPPlot.1), function(fuc)
+    fuc(object, group.by="X6clusters",pt.size = 0.3,label = T,
                label.repel = T,alpha = 0.9,
-               do.return = F,cols = Singler.colors,
+               do.return = F,#cols = Singler.colors,
                no.legend = T,label.size = 4, repel = T, 
-               title = paste("res =0.1"),
+               title = paste("res =0.8"),
                do.print = T))
 
 saveRDS(object, file = "data/B_AIM_74_20210311_SCT.rds")

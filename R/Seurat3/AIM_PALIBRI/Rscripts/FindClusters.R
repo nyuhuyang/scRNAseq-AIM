@@ -12,12 +12,11 @@ if (length(slurm_arrayid)!=1)  stop("Exact one argument must be supplied!")
 args <- as.integer(as.character(slurm_arrayid))
 print(paste0("slurm_arrayid=",args))
 
-resolutions = seq(1,2, by = 0.1)
+resolutions = c(seq(0.001,0.009, by = 0.001),seq(0.01,0.09, by = 0.01))
 
 object <- readRDS("data/B_AIM_74_20210311_SCT.rds")
 
-object %<>% FindClusters(resolution = resolutions[args], method = "igraph",
-                         algorithm = "Leiden")
+object %<>% FindClusters(resolution = resolutions[args], method = "igraph",algorithm = 4)
 UMAPPlot.1(object, group.by=paste0("SCT_snn_res.",resolutions[args]),
            pt.size = 0.3,label = T,
            label.repel = T,alpha = 0.9,
