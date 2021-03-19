@@ -3,7 +3,9 @@
 #  0 setup environment, install libraries if necessary, load libraries
 # 
 # ######################################################################
+# conda activate r4.0
 #devtools::install_github("immunogenomics/harmony", ref= "ee0877a",force = T)
+
 invisible(lapply(c("Seurat","dplyr","kableExtra","ggplot2","cowplot","sctransform",
                    "harmony"), function(x) {
     suppressPackageStartupMessages(library(x,character.only = T))
@@ -16,40 +18,57 @@ if(!dir.exists(path)) dir.create(path, recursive = T)
 #Idents(object) = "Doublets"
 #object %<>% subset(idents = "Singlet")
 Idents(object) = "cell.types"
-object %<>% subset(idents = c("B_cells","MCL"))
+object %<>% subset(idents = c("B_cells","MCL","HSC/progenitors"))
 
 jpeg(paste0(path,"B_MCL_subset.jpeg"), units="in", width=10, height=7,res=600)
-UMAPPlot(object, cols = c("#E6AB02","#2055da"),
+UMAPPlot(object, cols =  ExtractMetaColor(object),
            group.by = "cell.types")+
     ggtitle("remove sparse B and MCL cells")+
     TitleCenter()+
-    geom_segment(aes(x = -16, y = -4, xend = 0, yend = -4))+
-    geom_segment(aes(x = 0, y = -4, xend = 0, yend = 2))+
-    geom_segment(aes(x = 0, y = 2, xend = 10, yend = 2))
+    geom_segment(aes(x = -12, y = 2.5, xend = 6, yend = 2.5))+
+    geom_segment(aes(x = 6, y = 2.5, xend = 6, yend = -10))
 dev.off()
 
 object@meta.data %<>% cbind(object[["umap"]]@cell.embeddings )
-object %<>% subset(subset = UMAP_2 > -4)
-object %<>% subset(subset = UMAP_1 > 0 & UMAP_2 < 2, invert = T)
+object %<>% subset(subset = UMAP_1 < 6 & UMAP_2 < 2.5)
 
-TSNEPlot.1(object, group.by = "cell.types",
-   cols = c("#E6AB02","#2055da"),
-   unique.name = "cell.types",do.print = F, 
+UMAPPlot.1(object, group.by = "cell.types",
+   cols = ExtractMetaColor(object),
+   file.name = "B_MCL_subset_after.jpeg",do.print = T, 
    do.return = F)
-lapply(c("groups","orig.ident","conditions","tissues"), function(group.by)
-    TSNEPlot.1(object, group.by=group.by,pt.size = 0.5,label = F,
-               cols = Singler.colors,
+lapply(c("orig.ident","patient","cell.types"), function(group.by)
+    UMAPPlot.1(object, group.by=group.by,pt.size = 0.5,label = F,
+               cols = if(group.by == "cell.types") {
+                   ExtractMetaColor(object)
+               } else c(Singler.colors,Singler.colors),
                label.repel = T,alpha = 0.9,
                unique.name = "group.by",
                no.legend = F,label.size = 4, repel = T, 
                title = paste("Harmony Integration by",group.by),
                do.print = T, do.return = F))
 # re-run cluster
-npcs = 70
-object %<>% FindNeighbors(reduction = "harmony",dims = 1:npcs)
-res =1.
+DefaultAssay(object)  = "SCT"
+object <- FindVariableFeatures(object = object, selection.method = "vst",
+                               num.bin = 20, nfeatures = 2000,
+                               mean.cutoff = c(0.1, 8), dispersion.cutoff = c(1, Inf))
+object %<>% ScaleData
 
-object %<>% FindClusters(resolution = res)
+npcs = 85
+object %<>% FindNeighbors(reduction = "harmony",dims = 1:npcs)
+resolutions = seq(0.4,1.2, by = 0.1)
+for(i in 1:length(resolutions)){
+    object %<>% FindClusters(resolution = resolutions[i],method = "igraph",
+                             algorithm = 4)
+    UMAPPlot.1(object, group.by=paste0("SCT_snn_res.",resolutions[i]),
+               pt.size = 0.3,label = T,
+               label.repel = T,alpha = 0.9,
+               do.return = F,
+               no.legend = T,label.size = 4, repel = T, 
+               title = paste("res =",resolutions[i]),
+               do.print = T, save.path = paste0(path,"test_res"))
+    Progress(i,length(resolutions))
+}
+
 Idents(object) = "SCT_snn_res.1"
 object %<>% RenameIdents("0" = "C1",
                          "1" = "C1",
@@ -86,7 +105,7 @@ lapply(c("SCT_snn_res.1","X4clusters", "X5clusters"), function(group.by)
                title = paste("res =0.1"),
                do.print = T))
 
-saveRDS(object, file = "data/MCL_41_B_20200225.rds")
+saveRDS(object, file = "data/B_AIM_74_20210311_SCT.rds")
 
 # cell.types false positive results  ========
 table(object$cell.types, object$orig.ident) %>% kable %>% kable_styling()
@@ -107,39 +126,14 @@ cell_number = table(object$orig.ident_X4cluster) %>%
 rownames(cell_number) = c("Sample","Cell.number")
 write.csv(cell_number,paste0(path,"MCL_41_UMI_cell_number.csv"))
 #======3.2 rerun harmony =========================
-object@reductions = list();GC()
-
 DefaultAssay(object)  = "SCT"
 object <- FindVariableFeatures(object, selection.method = "vst",
                                num.bin = 20, nfeatures = 2000,
                                mean.cutoff = c(0.1, 8), dispersion.cutoff = c(1, Inf))
 object %<>% ScaleData
-object %<>% RunPCA(verbose = T,npcs = 100)
+object %<>% RunPCA(verbose = T,npcs = 85)
 
-jpeg(paste0(path,"S1_B_ElbowPlot.jpeg"), units="in", width=10, height=7,res=600)
-ElbowPlot(object, ndims = 100)
-dev.off()
-a <- seq(1,97, by = 6)
-b <- a+5
-for(i in seq_along(a)){
-    jpeg(paste0(path,"DimHeatmap_B_pca_",i,"_",a[i],"_",min(b[i],100),".jpeg"), units="in", width=10, height=7,res=600)
-    DimHeatmap(object, dims = a[i]:min(b[i],100),
-               nfeatures = 30,reduction = "pca")
-    dev.off() 
-}
-
-object %<>% JackStraw(num.replicate = 20,dims = 100)
-object %<>% ScoreJackStraw(dims = 1:100)
-a <- seq(1,100, by = 10)
-b <- a+9
-for(i in seq_along(a)){
-    jpeg(paste0(path,"JackStrawPlot_B_",i,"_",a[i],"_",min(b[i],100),".jpeg"), units="in", width=10, height=7,res=600)
-    print(JackStrawPlot(object, dims = a[i]:min(b[i],100)))
-    Progress(i,length(a))
-    dev.off()
-}
-
-npcs = 70
+npcs = 85
 jpeg(paste0(path,"S1_RunHarmony.jpeg"), units="in", width=10, height=7,res=600)
 system.time(object %<>% RunHarmony.1(group.by = "orig.ident", dims.use = 1:npcs,
                                    theta = 2, plot_convergence = TRUE,
@@ -147,9 +141,23 @@ system.time(object %<>% RunHarmony.1(group.by = "orig.ident", dims.use = 1:npcs,
 dev.off()
 
 object %<>% FindNeighbors(reduction = "harmony",dims = 1:npcs)
+resolutions = seq(0.4,1.2, by = 0.1)
+for(i in 1:length(resolutions)){
+    object %<>% FindClusters(resolution = resolutions[i],method = "igraph",
+                             algorithm = "Leiden")
+    UMAPPlot.1(object, group.by=paste0("SCT_snn_res.",resolutions[i]),
+               pt.size = 0.3,label = T,
+               label.repel = T,alpha = 0.9,
+               do.return = F,
+               no.legend = T,label.size = 4, repel = T, 
+               title = paste("res =",resolutions[i]),
+               do.print = T, save.path = paste0(path,"test_res"))
+    Progress(i,length(resolutions))
+}
+
 system.time(object %<>% RunTSNE(reduction = "harmony", dims = 1:npcs))
 object %<>% RunUMAP(reduction = "harmony", dims = 1:npcs)
-saveRDS(object, file = "data/MCL_41_B_20200204.rds")
+saveRDS(object, file = "data/B_AIM_74_20210311_SCT.rds")
 
 Idents(object)="cell.types"
 TSNEPlot.1(object, group.by="cell.types",pt.size = 0.5,label = F,
