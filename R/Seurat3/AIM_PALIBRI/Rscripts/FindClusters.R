@@ -26,3 +26,5 @@ UMAPPlot.1(object, group.by=paste0("SCT_snn_res.",resolutions[args]),
            title = paste("res =",resolutions[args]),
            file.name = paste0("SCT_snn_res=",resolutions[args],".jpeg"),
            do.print = T, save.path = paste0(path,"test_res"))
+saveRDS(object, file = paste0("data/B_AIM_74_res=",resolutions[args],".rds"))
+
