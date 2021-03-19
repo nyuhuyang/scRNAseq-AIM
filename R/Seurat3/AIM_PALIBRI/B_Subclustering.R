@@ -141,7 +141,7 @@ system.time(object %<>% RunHarmony.1(group.by = "orig.ident", dims.use = 1:npcs,
 dev.off()
 
 object %<>% FindNeighbors(reduction = "harmony",dims = 1:npcs)
-resolutions = seq(0.4,1.2, by = 0.1)
+resolutions = seq(0.1,2, by = 0.1)
 for(i in 1:length(resolutions)){
     object %<>% FindClusters(resolution = resolutions[i],method = "igraph",
                              algorithm = "Leiden")
