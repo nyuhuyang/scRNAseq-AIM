@@ -46,7 +46,7 @@ lapply(c("orig.ident","patient","cell.types"), function(group.by)
                no.legend = F,label.size = 4, repel = T, 
                title = paste("Harmony Integration by",group.by),
                do.print = T, do.return = F))
-UMAPPlot.1(object, group.by="SCT_snn_res.0.8",
+TSNEPlot.1(object, group.by="SCT_snn_res.0.8",
            pt.size = 0.3,label = T,
            label.repel = T,alpha = 0.9,
            do.return = F,
@@ -68,8 +68,10 @@ for (i in seq_along(snn_res)) {
                no.legend = T,label.size = 4, repel = T, 
                title = paste("resolution =",snn_res[i]),
                do.print = F)
-    jpeg(paste0(path,"test_res/sub_B_ident=",snn_res[i],".jpeg"), units="in", width=10, height=10,res=600)
+    jpeg(paste0(path,"test_res/umap_sub_B_ident=",snn_res[i],".jpeg"), units="in", width=10, height=10,res=600)
     print(g+xlim(-13,7)+ ylim(-10,2.5))
+    #    print(g+xlim(-20,15)+ ylim(-18,20))
+
     dev.off()
     Progress(i,length(snn_res))
 }

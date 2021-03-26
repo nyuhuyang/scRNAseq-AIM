@@ -33,7 +33,6 @@ X6clusters = paste0("C",1:6)
 cluster_markers = FindMarkers.UMI(object = object,ident.1 = X6clusters[args],
                                   group.by = "X6clusters",logfc.threshold = 0,
                                   only.pos = T,
-                                  return.thresh = 1,
                                   test.use = "MAST",
                                   latent.vars = "nFeature_SCT")
-write.csv(cluster_markers,file = paste0(path,"markers_",X6clusters[args],"csv"))
+write.csv(cluster_markers,file = paste0(path,"markers_",X6clusters[args],".csv"))

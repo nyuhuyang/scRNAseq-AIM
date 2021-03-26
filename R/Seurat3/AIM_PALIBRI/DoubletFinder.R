@@ -81,7 +81,7 @@ meta.data_list <- lapply(object_list, function(x) {
     })
 meta.data = bind_rows(meta.data_list)
 rownames(meta.data) = meta.data$row.names
-(load(file = "data/MCL_AIM_58_20201009.Rda"))
+(load(file = "data/MCL_AIM_74_20210311.Rda"))
 meta.data = meta.data[rownames(object@meta.data),]
 meta.data$doublets = gsub("Doublet","Doublet-Low Confidence",meta.data$Low_confident_doublets)
 meta.data[meta.data$High_confident_doublets %in% "Doublet","doublets"] = "Doublet-High Confidence"
@@ -89,7 +89,7 @@ meta.data = cbind(object@meta.data,meta.data$doublets)
 colnames(meta.data)[ncol(meta.data)] = "Doublets"
 table(meta.data$Doublets)
 object@meta.data = meta.data
-save(object,file=paste0("data/MCL_AIM_58_20201009.Rda"))
+save(object,file=paste0("data/MCL_AIM_74_20210311.Rda"))
 
 TSNEPlot.1(object, group.by = "Doublets",cols = c("red","orange","black"),
            title = "Singlets and possible Doublets", do.print = T,pt.size = 0.3)
