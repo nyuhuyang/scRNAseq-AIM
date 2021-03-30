@@ -27,12 +27,12 @@ if(!dir.exists(path))dir.create(path, recursive = T)
 object = readRDS(file = "data/B_AIM_74_20210311_SCT.rds")
 # Need 64GB
 DefaultAssay(object) = "SCT"
-Idents(object) = "X6clusters"
-X6clusters = paste0("C",1:6)
+Idents(object) = "SCT_snn_res.0.8"
+SCT_snn_res = as.integer(sort(object$SCT_snn_res.0.8))
 
-cluster_markers = FindMarkers.UMI(object = object,ident.1 = X6clusters[args],
-                                  group.by = "X6clusters",logfc.threshold = 0,
+cluster_markers = FindMarkers.UMI(object = object,ident.1 = SCT_snn_res[args],
+                                  group.by = "SCT_snn_res.0.8",logfc.threshold = 0,
                                   only.pos = T,
                                   test.use = "MAST",
                                   latent.vars = "nFeature_SCT")
-write.csv(cluster_markers,file = paste0(path,"markers_",X6clusters[args],".csv"))
+write.csv(cluster_markers,file = paste0(path,"markers_",SCT_snn_res[args],".csv"))
