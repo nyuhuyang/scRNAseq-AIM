@@ -28,11 +28,12 @@ object = readRDS(file = "data/B_AIM_74_20210311_SCT.rds")
 # Need 64GB
 DefaultAssay(object) = "SCT"
 Idents(object) = "SCT_snn_res.0.8"
-SCT_snn_res = as.integer(sort(object$SCT_snn_res.0.8))
+SCT_snn_res = sort(as.integer(unique(object$SCT_snn_res.0.8)))
 
 cluster_markers = FindMarkers.UMI(object = object,ident.1 = SCT_snn_res[args],
-                                  group.by = "SCT_snn_res.0.8",logfc.threshold = 0,
+                                  group.by = "SCT_snn_res.0.8",
+                                  logfc.threshold = 0.1,
                                   only.pos = T,
                                   test.use = "MAST",
                                   latent.vars = "nFeature_SCT")
-write.csv(cluster_markers,file = paste0(path,"markers_",SCT_snn_res[args],".csv"))
+write.csv(cluster_markers,file = paste0(path,"markers_FC0.1",SCT_snn_res[args],".csv"))
