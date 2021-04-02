@@ -17,31 +17,38 @@ print(paste0("slurm_arrayid=",args))
 
 test_df = data.frame(min_dist = c(rep(1:10/10,each = 5),rep(3:4/10,each = 30)),
                      spread = c(rep(3:7/5,times = 10),rep(seq(1.5,16,by = 0.5), times= 2)))
+
 # Selina chose args = 18,24,48
 print(spread <- test_df[args,"spread"])
 print(min.dist <- test_df[args,"min_dist"])
 
 load(file = "data/MCL_AIM_74_20210311.Rda")
 DefaultAssay(object) = "SCT"
-object@assays$SCT@scale.data = matrix(0,0,0)
-cc_genes = unlist(cc.genes)
-names(cc_genes) = NULL
-more_VariableFeatures <- unique(c(VariableFeatures(object),cc_genes))
-length(more_VariableFeatures)
-VariableFeatures(object) <- more_VariableFeatures
+add_cc_genes = FALSE
+if(add_cc_genes){
+    object@assays$SCT@scale.data = matrix(0,0,0)
+    cc_genes = unlist(cc.genes)
+    names(cc_genes) = NULL
+    more_VariableFeatures <- unique(c(VariableFeatures(object),cc_genes))
+    length(more_VariableFeatures)
+    VariableFeatures(object) <- more_VariableFeatures
+    length(VariableFeatures(object))
+    
+    object %<>% ScaleData
+    npcs = 85
+    object %<>% RunPCA(verbose = T,npcs = npcs)
+    
+    system.time(object %<>% RunHarmony.1(group.by = "orig.ident", dims.use = 1:npcs,
+                                         theta = 2, plot_convergence = TRUE,
+                                         nclust = 50, max.iter.cluster = 100))
+    
+    object %<>% FindNeighbors(reduction = "harmony",dims = 1:npcs)
+    object %<>% FindClusters(resolution = 0.8)
+    system.time(object %<>% RunTSNE(reduction = "harmony", dims = 1:npcs))
+}
 length(VariableFeatures(object))
 
-object %<>% ScaleData
-npcs = 85
-object %<>% RunPCA(verbose = T,npcs = npcs)
 
-system.time(object %<>% RunHarmony.1(group.by = "orig.ident", dims.use = 1:npcs,
-                                     theta = 2, plot_convergence = TRUE,
-                                     nclust = 50, max.iter.cluster = 100))
-
-object %<>% FindNeighbors(reduction = "harmony",dims = 1:npcs)
-object %<>% FindClusters(resolution = 0.8)
-system.time(object %<>% RunTSNE(reduction = "harmony", dims = 1:npcs))
 object %<>% RunUMAP(reduction = "harmony", dims = 1:npcs,min.dist = min.dist,spread = spread)
 
 file.name = paste0("min_dist=",min.dist,"_spread=",spread)
@@ -54,7 +61,7 @@ print(g1)
 dev.off()
 
 Rshiny_path <- paste0("Rshiny/MCL_AIM_74_20210327_",file.name,"_by_samples/")
-samples <- c("N01","N02","N03","N04","PtU01","PtU02","PtU03","PtU04",
+samples <- c("All_samples","N01","N02","N03","N04","PtU01","PtU02","PtU03","PtU04",
              "Pt2_30Pd","Pt10_LN2Pd","Pt11_LN1","Pt11_1","Pt11_14","Pt11_28",
              "Pt11_31","Pt13_BM1","Pt13_1a","Pt13_1b","Pt16_3Pd",
              "Pt17_LN1","Pt17_2","Pt17_7","Pt17_12","Pt17_31",
@@ -73,4 +80,4 @@ PrepareShiny(object, samples = samples, Rshiny_path = Rshiny_path,reduction = "u
 
 object@assays$RNA = NULL
 object@assays$SCT@scale.data = matrix(0,0,0)
-saveRDS(object, file = paste0("data/MCL_AIM_74_20210328_SCT_",file.name,".rds"))
+saveRDS(object, file = paste0("data/MCL_AIM_74_20210402_SCT_",file.name,".rds"))

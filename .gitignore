@@ -6,6 +6,7 @@
 .RData
 .DS_Store
 R/.DS_Store
+
 # User-specific files
 .Ruserdata
 
