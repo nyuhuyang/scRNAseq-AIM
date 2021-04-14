@@ -15,10 +15,16 @@ path <- paste0("output/",gsub("-","",Sys.Date()),"/")
 if(!dir.exists(path)) dir.create(path, recursive = T)
 #======3.1 subset B and MCL =========================
 (load(file = "data/MCL_AIM_74_20210311_SCT.Rda"))
+meta.data = object@meta.data
+rm(object);GC()
+object = readRDS(file = "data/MCL_AIM_74_20210402_SCT_min_dist=0.5_spread=1.2.rds")
+
+table(rownames(object@meta.data) == rownames(meta.data))
+object@meta.data = meta.data
 #Idents(object) = "Doublets"
 #object %<>% subset(idents = "Singlet")
 Idents(object) = "cell.types"
-object %<>% subset(idents = c("B_cells","MCL","HSC/progenitors"))
+object %<>% subset(idents = c("B_cells","MCL"))
 
 jpeg(paste0(path,"B_MCL_subset.jpeg"), units="in", width=10, height=7,res=600)
 UMAPPlot(object, cols =  ExtractMetaColor(object),

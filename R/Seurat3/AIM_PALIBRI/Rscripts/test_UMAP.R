@@ -6,7 +6,7 @@ invisible(lapply(c("Seurat","dplyr","ggplot2","cowplot","sctransform",
 source("https://raw.githubusercontent.com/nyuhuyang/SeuratExtra/master/R/Seurat3_functions.R")
 save.path <- paste0("output/",gsub("-","",Sys.Date()))
 if(!dir.exists(save.path)) dir.create(save.path, recursive = T)
-
+# Need 64GB ?
 set.seed(101)
 # SLURM_ARRAY_TASK_ID
 slurm_arrayid <- Sys.getenv('SLURM_ARRAY_TASK_ID')
@@ -61,7 +61,7 @@ print(g1)
 dev.off()
 
 Rshiny_path <- paste0("Rshiny/MCL_AIM_74_20210327_",file.name,"_by_samples/")
-samples <- c("All_samples","N01","N02","N03","N04","PtU01","PtU02","PtU03","PtU04",
+samples <- c("N01","N02","N03","N04","PtU01","PtU02","PtU03","PtU04",
              "Pt2_30Pd","Pt10_LN2Pd","Pt11_LN1","Pt11_1","Pt11_14","Pt11_28",
              "Pt11_31","Pt13_BM1","Pt13_1a","Pt13_1b","Pt16_3Pd",
              "Pt17_LN1","Pt17_2","Pt17_7","Pt17_12","Pt17_31",
@@ -78,6 +78,15 @@ samples <- c("All_samples","N01","N02","N03","N04","PtU01","PtU02","PtU03","PtU0
 PrepareShiny(object, samples = samples, Rshiny_path = Rshiny_path,reduction = "umap",
              verbose = T)
 
+Rshiny_path <- paste0("Rshiny/MCL_AIM_74_20210327_",file.name,"_all/")
+samples <- c("All_samples")
+PrepareShiny(object, samples = samples, Rshiny_path = Rshiny_path,reduction = "umap",
+             verbose = T)
+
 object@assays$RNA = NULL
 object@assays$SCT@scale.data = matrix(0,0,0)
 saveRDS(object, file = paste0("data/MCL_AIM_74_20210402_SCT_",file.name,".rds"))
+
+PrepareShiny(object, samples = samples, Rshiny_path = Rshiny_path,
+             reduction = "umap",split.by = "SCT_snn_res.0.8",
+             verbose = T)

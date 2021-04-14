@@ -23,26 +23,13 @@ path <- paste0("output/",gsub("-","",Sys.Date()),"/")
 if(!dir.exists(path))dir.create(path, recursive = T)
 # Need 64GB
 # load files
+object <- readRDS("data/MCL_AIM_74_20210402_SCT_min_dist=0.5_spread=1.2.rds")
+object@meta.data$SCT_snn_res.0.8 %<>% as.character %>% as.integer
+idents.1 = sort(unique(object$SCT_snn_res.0.8))
 
-object = readRDS(file = "data/B_AIM_74_20210311_SCT.rds")
-DefaultAssay(object) = "SCT"
-group.by  = c("X6clusters","SCT_snn_res.0.8")[1]
-
-if(group.by == "X6clusters"){
-    Idents(object) = "X6clusters"
-    idents.1 = paste0("C",1:6)
-    Idents(object) %<>% factor(levels = idents.1)
-}
-if(group.by == "SCT_snn_res.0.8"){
-    object@meta.data$SCT_snn_res.0.8 %<>% as.character %>% as.integer
-    idents.1 = sort(unique(object$SCT_snn_res.0.8))
-    
-    Idents(object) = "SCT_snn_res.0.8"
-    Idents(object) %<>% factor(levels = idents.1)
-}
-
+Idents(object) = "SCT_snn_res.0.8"
 cluster_markers = FindMarkers.UMI(object = object,ident.1 = idents.1[args],
-                                  group.by = group.by,
+                                  group.by = "SCT_snn_res.0.8",
                                   logfc.threshold = 0.1,
                                   only.pos = F,
                                   test.use = "MAST",

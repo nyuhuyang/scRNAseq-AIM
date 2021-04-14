@@ -50,7 +50,7 @@ object@meta.data = meta.data
 #======1.6 Performing SCTransform and integration =========================
 set.seed(100)
 object_list <- SplitObject(object, split.by = "orig.ident")
-remove(object)GC()
+remove(object);GC()
 #save(object_list, file = "data/object_list_27_20201008.Rda")
 #(load(file = "data/object_list_27_20201008.Rda"))
 object_list %<>% lapply(SCTransform)
@@ -128,7 +128,7 @@ object@reductions$umap@cell.embeddings[,"UMAP_1"] = - object@reductions$umap@cel
 
 object@assays$RNA@scale.data = matrix(0,0,0)
 object@assays$SCT@scale.data = matrix(0,0,0)
-object@assays$integrated = NULL
+object[["integrated"]] = NULL
 
 
 save(object, file = "data/MCL_AIM_74_20210311.Rda")
